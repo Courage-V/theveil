@@ -8977,7 +8977,7 @@ do
 
 							if child3 then
 								local position = child3.Position
-								str5 = "loadstring(game:HttpGet(\"https://pastebin.com/raw/nd9mnqdP\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
+								str5 = "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/Fahdhg/theveil/main/goto.lua\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
 							end
 
 							local tbl19 = {
@@ -9970,7 +9970,7 @@ do
 
 			if position then
 				do
-					str5 = "loadstring(game:HttpGet(\"https://pastebin.com/raw/nd9mnqdP\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
+					str5 = "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/Fahdhg/theveil/main/goto.lua\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
 				end
 			end
 
