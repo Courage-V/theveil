@@ -1,15 +1,4 @@
-
--- Detected obfuscation: Luraph v15.
---
 -- The Courage UI library is hosted separately and fetched over HttpGet;
--- this file contains only the Veil script and its UI-compatibility adapter.
-
--- =================================================================
--- Anti-tamper guard + webhook logger (Drowned method)
--- Snapshots __namecall at load, wraps hookmetamethod, and polls for
--- swaps. On detection: Discord webhook notification + kick.
--- Ported from main (3).lua L5-L198 (itself from anti tamp (1).lua).
--- Deterrence inside the user's own executor, not server-side security.
 -- =================================================================
 do
 	local Players_AT = game:GetService("Players")
