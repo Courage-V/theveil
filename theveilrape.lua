@@ -195,7 +195,7 @@ do
 	end)
 end
 
-local COURAGE_UI_URL = "https://raw.githubusercontent.com/Fahdhg/courage-ui/main/CourageUI.lua"
+local COURAGE_UI_URL = "https://raw.githubusercontent.com/Courage-V/courage-ui/main/CourageUI.lua"
 
 local function __LoadCourageUI()
 	-- a local CourageUI.lua copy wins if present (offline use / testing)
@@ -8977,7 +8977,7 @@ do
 
 							if child3 then
 								local position = child3.Position
-								str5 = "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/Fahdhg/theveil/main/goto.lua\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
+								str5 = "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/Courage-V/theveil/main/goto.lua\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
 							end
 
 							local tbl19 = {
@@ -9970,7 +9970,7 @@ do
 
 			if position then
 				do
-					str5 = "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/Fahdhg/theveil/main/goto.lua\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
+					str5 = "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/Courage-V/theveil/main/goto.lua\"))(" .. string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z) .. ")"
 				end
 			end
 
