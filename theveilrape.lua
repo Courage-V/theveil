@@ -1,4 +1,4 @@
--- Deobfuscated by angelofthenorth.
+
 -- Detected obfuscation: Luraph v15.
 --
 -- The Courage UI library is hosted separately and fetched over HttpGet;
